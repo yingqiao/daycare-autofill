@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg
+*.egg-info/
+dist/
+build/
+
+# Jupyter and editor
+.ipynb_checkpoints/
+.vscode/
+*.swp
+
+# Environment
+.env
+.venv/
+env/
+venv/
+
+# Output
+*.xlsx
+*.csv
+*.zip
+*.pdf
+
+# Streamlit Cloud artifacts
+.streamlit/secrets.toml

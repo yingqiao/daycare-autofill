@@ -1,0 +1,7 @@
+streamlit
+pandas
+requests
+python-dotenv
+googlemaps
+beautifulsoup4
+openpyxl
