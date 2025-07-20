@@ -3,9 +3,9 @@ WEIGHTS = {
     "Mandarin": 2,
     "Meals": 1,
     "Curriculum": 1,
-    "Staff Stability": 2,
+    "Staff Stability": 3,
     "Cultural Diversity": 1,
-    "MSFT Discount": 3
+    "MSFT Discount": 2
 }
 
 def compute_score(row, weights):

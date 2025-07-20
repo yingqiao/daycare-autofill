@@ -2,14 +2,23 @@ import streamlit as st
 import pandas as pd
 from google_places import search_daycares
 from daycare_scraper import scrape_keywords
+from daycare_scraper_gemini import scrape_daycare_info
 from scoring import compute_score, WEIGHTS as DEFAULT_WEIGHTS
 from formatter import classify_type, check_msft_discount
-import json
+import json, os
+
+if os.getenv("GEMINI_DEBUG") == "1":
+    st.info("🔍 Gemini debug mode is ON. JSON outputs will print to terminal.")
 
 st.set_page_config(page_title="Daycare Autofill", layout="wide")
 st.title("🔍 Daycare Autofill Tool")
-st.sidebar.header("⚖️ Scoring Weights")
 
+# Sidebar for selecting scraper engine
+st.sidebar.header("🔎 Scraper Engine")
+scraper_mode = st.sidebar.radio("", ["Gemini (Smart)", "Keyword (Fast)"])
+
+# Set up sidebar for user input, default weights, and scoring
+st.sidebar.header("⚖️ Scoring Weights")
 user_weights = {
     "Mandarin": st.sidebar.slider("Mandarin Exposure", 0, 5, DEFAULT_WEIGHTS["Mandarin"]),
     "Meals": st.sidebar.slider("Meals Provided", 0, 5, DEFAULT_WEIGHTS["Meals"]),
@@ -21,13 +30,14 @@ user_weights = {
 
 
 
-location = st.text_input("Enter your address", value="Bellevue, WA 98008")
-radius = st.slider("Search radius (meters)", min_value=1000, max_value=10000, value=5000)
+location = st.text_input("Enter your address", value="1028 179th PL NE, Bellevue, WA 98008")
+radius_miles = st.slider("📍 Search Radius (miles)", min_value=1, max_value=10, step=1, value=5)
+radius_meters = radius_miles * 1609  # 1 mile = 1609 meters
 limit = st.number_input("Max results", min_value=1, max_value=50, value=10)
 
 if st.button("Search Daycares"):
     with st.spinner("Fetching from Google Maps..."):
-        results = search_daycares(location, radius, limit)
+        results = search_daycares(location, radius_meters, limit)
 
     st.success(f"Found {len(results)} results. Scraping websites...")
 
@@ -45,11 +55,24 @@ if st.button("Search Daycares"):
     for row in results:
         row["Type (Center/Family)"] = classify_type(row["Name"])
         row["MSFT Discount"] = check_msft_discount(row["Name"], msft_list)
+        # Scrape website for detailed info
         if row["Website"]:
-            scraped = scrape_keywords(row["Website"], keywords)
+            if scraper_mode.startswith("Gemini"):
+                from daycare_scraper_gemini import scrape_daycare_info
+                scraped = scrape_daycare_info(row["Website"], name=row["Name"])
+            else:
+                from daycare_scraper import scrape_keywords
+                scraped = scrape_keywords(row["Website"], keywords)
             row.update(scraped)
         else:
-            row.update({k: "No" for k in keywords})
+            row.update({
+                "AgesServed": "",
+                "Mandarin": "No",
+                "MealsProvided": "No",
+                "Curriculum": "",
+                "CulturalDiversity": "Unknown",
+                "StaffStability": "No"
+            })
         # Update scoring to use current user_weights
         row["Score"] = compute_score(row, weights=user_weights)
 

@@ -5,3 +5,4 @@ python-dotenv
 googlemaps
 beautifulsoup4
 openpyxl
+google-generativeai
