@@ -6,3 +6,7 @@ googlemaps
 beautifulsoup4
 openpyxl
 google-genai
+selenium
+webdriver-manager
+
+

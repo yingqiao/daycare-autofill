@@ -116,7 +116,7 @@ def search_daycares(location, max_driving_distance_miles=5, limit=20):
                 "Website": data.get("website"),
                 "Phone": data.get("formatted_phone_number"),
                 "Rating": data.get("rating"),
-                "Distance": distance_info["distance_text"],
+                "Distance_Miles": distance_info["distance_text"],
                 "DistanceMiles": distance_info["distance_miles"]
             })
 
@@ -132,7 +132,7 @@ def search_daycares(location, max_driving_distance_miles=5, limit=20):
         # Step 5: Apply final limit to get closest N results
         final_results = filtered_results[:limit]
         
-        # Step 6: Remove DistanceMiles column for user output (keep Distance for display)
+        # Step 6: Remove DistanceMiles column for user output (keep Distance_Miles for display)
         for result in final_results:
             del result['DistanceMiles']
         

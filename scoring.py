@@ -12,15 +12,15 @@ def compute_score(row, weights):
     score = 0
     if row.get("Mandarin") == "Yes":
         score += weights["Mandarin"]
-    if row.get("Meals Provided") == "Yes":
+    if row.get("MealsProvided") == "Yes":
         score += weights["Meals"]
     if row.get("Curriculum"):
         score += weights["Curriculum"]
-    if row.get("Staff Stability") == "Yes":
+    if row.get("StaffStability") == "Yes":
         score += weights["Staff Stability"]
-    if row.get("Cultural Diversity") == "High":
+    if row.get("CulturalDiversity") == "High":
         score += weights["Cultural Diversity"]
-    if row.get("MSFT Discount") == "Yes":
+    if row.get("MSFT_Discount") == "Yes":
         score += weights["MSFT Discount"]
     return score
 
