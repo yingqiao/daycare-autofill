@@ -1,5 +1,6 @@
 import streamlit as st
 import pandas as pd
+from io import BytesIO
 from google_places import search_daycares
 from daycare_scraper import scrape_keywords
 from daycare_scraper_gemini import scrape_daycare_info
@@ -32,12 +33,11 @@ user_weights = {
 
 location = st.text_input("Enter your address", value="1028 179th PL NE, Bellevue, WA 98008")
 radius_miles = st.slider("📍 Search Radius (miles)", min_value=1, max_value=10, step=1, value=5)
-radius_meters = radius_miles * 1609  # 1 mile = 1609 meters
 limit = st.number_input("Max results", min_value=1, max_value=50, value=10)
 
 if st.button("Search Daycares"):
     with st.spinner("Fetching from Google Maps..."):
-        results = search_daycares(location, radius_meters, limit)
+        results = search_daycares(location, max_driving_distance_miles=radius_miles, limit=limit)
 
     st.success(f"Found {len(results)} results. Scraping websites...")
 
@@ -57,11 +57,9 @@ if st.button("Search Daycares"):
         row["MSFT Discount"] = check_msft_discount(row["Name"], msft_list)
         # Scrape website for detailed info
         if row["Website"]:
-            if scraper_mode.startswith("Gemini"):
-                from daycare_scraper_gemini import scrape_daycare_info
+            if scraper_mode.startswith("Gemini"):                
                 scraped = scrape_daycare_info(row["Website"], name=row["Name"])
-            else:
-                from daycare_scraper import scrape_keywords
+            else:                
                 scraped = scrape_keywords(row["Website"], keywords)
             row.update(scraped)
         else:
@@ -79,4 +77,14 @@ if st.button("Search Daycares"):
     df = pd.DataFrame(results)
     st.dataframe(df)
 
-    st.download_button("Download as Excel", df.to_excel(index=False), file_name="daycare_results.xlsx")
+    # Convert dataframe to Excel bytes for download
+    excel_buffer = BytesIO()
+    df.to_excel(excel_buffer, index=False, engine='openpyxl')
+    excel_buffer.seek(0)
+    
+    st.download_button(
+        label="Download as Excel",
+        data=excel_buffer.getvalue(),
+        file_name="daycare_results.xlsx",
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
