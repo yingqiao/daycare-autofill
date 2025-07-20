@@ -46,7 +46,7 @@ with tab1:
         
     with col2:
         radius_miles = st.slider("Search Radius (miles)", min_value=1, max_value=15, step=1, value=5)
-        limit = st.number_input("Max results", min_value=1, max_value=100, value=20)
+        limit = st.number_input("Max results", min_value=1, max_value=100, value=10)
     
     if st.button("🔍 Search Daycares", type="primary"):
         with st.spinner("🗺️ Searching Google Places API..."):
@@ -169,9 +169,9 @@ with tab2:
             # Filter options
             col1, col2 = st.columns([1, 1])
             with col1:
-                scrape_only_keep = st.checkbox("🎯 Only scrape providers marked as 'Keep'", value=True)
+                scrape_only_keep = st.checkbox("🎯 Only scrape providers marked as 'Keep'", value=False)
             with col2:
-                max_providers = st.number_input("⚡ Max providers to scrape", min_value=1, max_value=len(df_upload), value=min(10, len(df_upload)))
+                max_providers = st.number_input("⚡ Max providers to scrape", min_value=1, max_value=len(df_upload), value=min(5, len(df_upload)))
             
             if st.button("🚀 Start Comprehensive Scraping", type="primary"):
                 # Filter data if needed

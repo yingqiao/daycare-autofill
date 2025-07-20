@@ -262,6 +262,7 @@ def scrape_comprehensive_daycare_info(base_url, name="daycare", max_pages=10):
                 })
                 scraped_urls.append(url)
                 print(f"  ✅ Success ({len(text)} chars, {method})")
+                        
             else:
                 print(f"  ⚠️ Skipped (insufficient content: {len(text) if text else 0} chars)")
         except Exception as e:
@@ -416,6 +417,7 @@ def scrape_multiple_urls(url_list, name="daycare"):
                 scraped_urls.append(url)
                 scraping_methods.append(method)
                 print(f"    ✅ Success ({len(text)} chars, {method})")
+                        
             else:
                 print(f"    ⚠️ Skipped (insufficient content: {len(text) if text else 0} chars)")
                 
@@ -431,7 +433,7 @@ def scrape_multiple_urls(url_list, name="daycare"):
     
     print(f"  ✅ Combined content from {len(scraped_urls)} URLs ({len(combined_content)} total chars)")
     
-    # Cache the combined content
+    # Cache the combined content (always saved, not just in DEBUG)
     text_cache_path = get_text_cache_path(name)
     with open(text_cache_path, "w", encoding="utf-8") as f:
         f.write(f"Multi-URL scraping for: {name}\n")
@@ -444,6 +446,30 @@ def scrape_multiple_urls(url_list, name="daycare"):
             f.write(f"  {j}. {scraped_url}\n")
         f.write("=" * 80 + "\n")
         f.write(combined_content)
+    
+    # DEBUG: Save combined content before Gemini analysis
+    if DEBUG:
+        debug_cache_path = CACHE_TEXT_DIR / f"debug_{name.replace(' ', '_')}_{int(time.time())}.txt"
+        try:
+            with open(debug_cache_path, "w", encoding="utf-8") as f:
+                f.write(f"DEBUG - Combined content before Gemini analysis\n")
+                f.write(f"Provider: {name}\n")
+                f.write(f"Scraping type: Multi-URL\n")
+                f.write(f"Total URLs provided: {len(url_list)}\n")
+                f.write(f"Successful URLs: {len(scraped_urls)}\n")
+                f.write(f"Failed URLs: {len(url_list) - len(scraped_urls)}\n")
+                f.write(f"Methods used: {', '.join(set(scraping_methods))}\n")
+                f.write(f"Timestamp: {time.strftime('%Y-%m-%d %H:%M:%S')}\n")
+                f.write(f"Combined content length: {len(combined_content)}\n")
+                f.write("All provided URLs:\n")
+                for j, provided_url in enumerate(url_list, 1):
+                    status = "✅ Success" if provided_url in scraped_urls else "❌ Failed"
+                    f.write(f"  {j}. {provided_url} - {status}\n")
+                f.write("=" * 80 + "\n")
+                f.write(combined_content)
+            print(f"[DEBUG] Combined content saved to: {debug_cache_path}")
+        except Exception as e:
+            print(f"[DEBUG] Failed to save combined content: {e}")
     
     # Enhanced Gemini analysis for multi-URL content
     print(f"🤖 Analyzing combined content with Gemini...")
@@ -577,6 +603,27 @@ def scrape_daycare_info(url_or_urls, name="daycare"):
         f.write("=" * 80 + "\n")
         f.write(combined_text)
 
+    # DEBUG: Save combined content before Gemini analysis
+    if DEBUG:
+        debug_cache_path = CACHE_TEXT_DIR / f"debug_{name.replace(' ', '_')}_{int(time.time())}.txt"
+        try:
+            with open(debug_cache_path, "w", encoding="utf-8") as f:
+                f.write(f"DEBUG - Combined content before Gemini analysis\n")
+                f.write(f"Provider: {name}\n")
+                f.write(f"Scraping type: Comprehensive multi-page\n")
+                f.write(f"Base URL: {url}\n")
+                f.write(f"Total pages scraped: {len(scraped_urls)}\n")
+                f.write(f"Total content length: {len(combined_text)}\n")
+                f.write(f"Timestamp: {time.strftime('%Y-%m-%d %H:%M:%S')}\n")
+                f.write("All scraped URLs:\n")
+                for i, scraped_url in enumerate(scraped_urls, 1):
+                    f.write(f"  {i}. {scraped_url}\n")
+                f.write("=" * 80 + "\n")
+                f.write(combined_text)
+            print(f"[DEBUG] Combined content saved to: {debug_cache_path}")
+        except Exception as e:
+            print(f"[DEBUG] Failed to save combined content: {e}")
+
     # Enhanced Gemini analysis for multi-page content
     print(f"🤖 Analyzing {len(combined_text)} characters with Gemini...")
     summary = call_gemini_summary_multipage(combined_text, scraped_urls)
@@ -594,8 +641,8 @@ def scrape_daycare_info(url_or_urls, name="daycare"):
         json.dump(enhanced_summary, f, indent=2)
 
     if DEBUG:
-        print(f"[DEBUG] Comprehensive analysis for {name}:")
-        print(f"  Pages: {len(scraped_urls)}")
+        print(f"[DEBUG] Analysis for {name}:")
+        print(f"  Method: {enhanced_summary.get('scraping_method', 'unknown')}")
         print(f"  Content: {len(combined_text)} chars")
         print(json.dumps(summary, indent=2))
 
@@ -687,6 +734,11 @@ def test_single_website(url, name=None):
     print(f"\n✅ Test completed successfully!")
     print(f"📁 Check cache_json/ and cache_text/ folders for saved files")
     
+    if DEBUG:
+        print(f"🔍 DEBUG MODE: Simplified debug files saved to cache_text/ folder")
+        print(f"   - Combined content before Gemini analysis only")
+        print(f"   - Individual scraping attempts removed for cleaner output")
+    
     return summary
 
 
@@ -755,6 +807,11 @@ def test_comprehensive_website(url, name=None):
     
     print(f"\n✅ Comprehensive test completed successfully!")
     print(f"📁 Check cache_json/ and cache_text/ folders for detailed files")
+    
+    if DEBUG:
+        print(f"🔍 DEBUG MODE: Simplified debug files saved to cache_text/ folder")
+        print(f"   - Combined content before Gemini analysis only")
+        print(f"   - Individual scraping attempts removed for cleaner output")
     
     return summary
 
