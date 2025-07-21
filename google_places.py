@@ -41,39 +41,67 @@ def search_daycares(location, max_driving_distance_miles=5, limit=20):
         # Step 1: Get all places using rankby='distance' with pagination
         all_places = []
         next_page_token = None
-        max_pages = 3  # Limit to avoid excessive API calls (60 results max)
+        max_pages = 5  # Limit to avoid excessive API calls (100 results max)
         
-        for page in range(max_pages):
-            if page == 0:
-                # First request
-                places_result = gmaps.places_nearby(
-                    location=latlng,
-                    rank_by='distance',  # Sort by straight-line distance, no radius limit
-                    keyword="daycare"
-                )
-            else:
-                # Subsequent requests with page token
-                if not next_page_token:
-                    break
-                # Small delay required for page tokens                
-                time.sleep(2)
-                places_result = gmaps.places_nearby(
-                    location=latlng,
-                    page_token=next_page_token
-                )
+        # Try multiple search strategies to get more results
+        search_strategies = [
+            {"keyword": "daycare"},
+            {"keyword": "childcare"}, 
+            {"keyword": "preschool"},
+            {"type": "school"}  # This catches many daycare/preschool facilities
+        ]
+        
+        for strategy_idx, search_params in enumerate(search_strategies):
+            strategy_name = f"{list(search_params.keys())[0]}={list(search_params.values())[0]}"
+            print(f"🔍 Search strategy {strategy_idx + 1}: {strategy_name}")
             
-            if places_result.get("status") != "OK":
-                print(f"Places API error: {places_result.get('status')}")
-                break
+            next_page_token = None
+            strategy_places = []
+            
+            for page in range(max_pages):
+                if page == 0:
+                    # First request with current strategy
+                    places_result = gmaps.places_nearby(
+                        location=latlng,
+                        rank_by='distance',
+                        **search_params
+                    )
+                else:
+                    # Subsequent requests with page token
+                    if not next_page_token:
+                        print(f"📄 No more pages available after page {page} for {strategy_name}")
+                        break
+                    # Small delay required for page tokens                
+                    time.sleep(2)
+                    places_result = gmaps.places_nearby(
+                        location=latlng,
+                        page_token=next_page_token
+                    )
                 
-            current_places = places_result.get("results", [])
-            all_places.extend(current_places)
-            print(f"📄 Page {page + 1}: Found {len(current_places)} places (total: {len(all_places)})")
+                if places_result.get("status") != "OK":
+                    print(f"Places API error: {places_result.get('status')}")
+                    break
+                    
+                current_places = places_result.get("results", [])
+                strategy_places.extend(current_places)
+                print(f"📄 Page {page + 1}: Found {len(current_places)} places (strategy total: {len(strategy_places)})")
+                
+                # Check for next page
+                next_page_token = places_result.get("next_page_token")
+                if not next_page_token:
+                    print(f"📄 No next_page_token found after page {page + 1} - strategy complete")
+                    break
+                else:
+                    print(f"📄 Next page token available for page {page + 2}")
             
-            # Check for next page
-            next_page_token = places_result.get("next_page_token")
-            if not next_page_token:
-                break
+            # Add strategy results to main list, avoiding duplicates by place_id
+            existing_ids = {place.get("place_id") for place in all_places}
+            new_places = [place for place in strategy_places if place.get("place_id") not in existing_ids]
+            all_places.extend(new_places)
+            print(f"✅ Strategy {strategy_idx + 1} complete: {len(strategy_places)} found, {len(new_places)} new (total: {len(all_places)})")
+            
+            # Small delay between strategies
+            time.sleep(1)
 
         print(f"🔍 Processing {len(all_places)} places to calculate driving distances...")
 

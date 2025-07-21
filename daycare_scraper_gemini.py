@@ -129,6 +129,10 @@ def discover_all_internal_links(base_url):
             href = link.get('href')
             if not href:
                 continue
+            
+            # Filter out mailto and other communication protocol links
+            if href.lower().startswith(('mailto:', 'tel:', 'sms:', 'skype:', 'whatsapp:', 'facetime:')):
+                continue  # Skip communication links to avoid triggering services and delays
                 
             # Convert relative URLs to absolute
             full_url = urljoin(base_url, href)
